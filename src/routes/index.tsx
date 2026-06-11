@@ -239,35 +239,6 @@ function About() {
   );
 }
 
-function VideoShowcase() {
-  return (
-    <section className="bg-secondary py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Nuestra barbería</span>
-          <h2 className="mt-4 font-display text-4xl md:text-5xl">
-            Vive la <span className="italic">experiencia</span>
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Un vistazo a nuestro estilo, ambiente y trabajo diario.
-          </p>
-        </div>
-        <div className="mt-12 overflow-hidden rounded-2xl border border-border shadow-deep">
-          <video
-            src={videoAsset.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            controls
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Services() {
   const services = [
     { name: "Corte de Caballero", desc: "Corte clásico o moderno con acabado profesional.", price: "15€" },
