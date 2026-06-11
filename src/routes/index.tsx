@@ -81,7 +81,6 @@ function Index() {
       <Hero />
       <Stats />
       <About />
-      <VideoShowcase />
       <Services />
       <Why />
       <Testimonials />
