@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-bh.jpg.asset.json";
-import videoAsset from "@/assets/barberia.mp4.asset.json";
 import {
   Scissors,
   Phone,
