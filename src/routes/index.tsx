@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-bh.jpg.asset.json";
+import aboutVideo from "@/assets/barberia-about.mp4.asset.json";
 import {
   Scissors,
   Phone,
@@ -201,11 +202,15 @@ function About() {
   return (
     <section id="nosotros" className="mx-auto max-w-7xl px-6 py-24 md:py-32">
       <div className="grid items-center gap-12 md:grid-cols-2">
-        <div className="relative flex aspect-square items-center justify-center rounded-2xl bg-card shadow-deep">
-          <img
-            src={LOGO}
-            alt="Logo Peluquería Barbería Borja Hernández"
-            className="h-3/4 w-3/4 rounded-full object-cover"
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-card shadow-deep">
+          <video
+            src={aboutVideo.url}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="h-full w-full object-cover"
           />
           <div className="absolute -bottom-6 -right-6 hidden h-32 w-32 rounded-2xl bg-foreground md:block" />
         </div>
