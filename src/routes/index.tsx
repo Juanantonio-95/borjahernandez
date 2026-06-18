@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-bh.jpg.asset.json";
 import aboutVideo from "@/assets/barberia-about.mp4.asset.json";
+import { BookingSection } from "@/components/BookingSection";
 import {
   Scissors,
   Phone,
@@ -80,6 +81,7 @@ function Index() {
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <Hero />
+      <BookingSection />
       <Stats />
       <About />
       <Services />
@@ -148,7 +150,7 @@ function Hero() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
-            href={`tel:+34${PHONE}`}
+            href="#reservar"
             className="group inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3.5 font-medium text-background transition-transform hover:scale-105"
           >
             <Calendar className="h-4 w-4" /> Reservar cita
@@ -460,7 +462,7 @@ function CTAFinal() {
           que marcan la diferencia.
         </p>
         <a
-          href={`tel:+34${PHONE}`}
+          href="#reservar"
           className="mt-10 inline-flex items-center gap-2 rounded-full bg-background px-8 py-4 font-medium text-foreground transition-transform hover:scale-105"
         >
           <Calendar className="h-4 w-4" /> Reservar ahora
@@ -482,6 +484,9 @@ function Footer() {
         </div>
         <div className="text-center text-xs text-muted-foreground md:text-right">
           © {new Date().getFullYear()} Peluquería Barbería Borja Hernández · {ADDRESS}
+          <div className="mt-2">
+            <Link to="/admin" className="text-muted-foreground/60 hover:text-foreground">Acceso equipo</Link>
+          </div>
         </div>
       </div>
     </footer>
