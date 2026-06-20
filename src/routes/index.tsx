@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-bh.jpg.asset.json";
 import aboutVideo from "@/assets/barberia-about.mp4.asset.json";
 import { BookingSection } from "@/components/BookingSection";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SERVICES } from "@/lib/services";
 import {
   Scissors,
   Phone,
@@ -247,14 +249,9 @@ function About() {
 }
 
 function Services() {
-  const services = [
-    { name: "Corte de Caballero", desc: "Corte clásico o moderno con acabado profesional.", price: "15€" },
-    { name: "Degradado Fade", desc: "Degradados perfectos: low, mid, high y skin fade.", price: "17€" },
-    { name: "Arreglo de Barba", desc: "Perfilado y diseño adaptado a tus rasgos.", price: "10€" },
-    { name: "Afeitado Tradicional", desc: "Navaja, toallas calientes y cuidados premium.", price: "15€" },
-    { name: "Corte + Barba", desc: "Combo completo para una imagen impecable.", price: "22€" },
-    { name: "Asesoramiento de Imagen", desc: "Encontramos el estilo que mejor te define.", price: "Consulta" },
-  ];
+  const categories = Array.from(new Set(SERVICES.map((s) => s.category)));
+  const byCategory = (cat: string) => SERVICES.filter((s) => s.category === cat);
+
   return (
     <section id="servicios" className="bg-secondary py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6">
@@ -268,24 +265,49 @@ function Services() {
           </p>
         </div>
 
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((s) => (
-            <article
-              key={s.name}
-              className="group relative overflow-hidden rounded-xl border border-border bg-card p-8 transition-all hover:border-foreground hover:shadow-deep"
-            >
-              <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-foreground/5 text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
-                <Scissors className="h-5 w-5" />
+        <Tabs defaultValue={categories[0]} className="mt-16">
+          <TabsList className="mx-auto flex w-fit flex-wrap justify-center gap-2 bg-transparent">
+            {categories.map((cat) => (
+              <TabsTrigger
+                key={cat}
+                value={cat}
+                className="rounded-full border border-border bg-background px-4 py-2 text-sm data-[state=active]:bg-foreground data-[state=active]:text-background"
+              >
+                {cat}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {categories.map((cat) => (
+            <TabsContent key={cat} value={cat} className="mt-8">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {byCategory(cat).map((s) => (
+                  <article
+                    key={s.id}
+                    className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all hover:border-foreground hover:shadow-deep"
+                  >
+                    <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/5 text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
+                      <Scissors className="h-4 w-4" />
+                    </div>
+                    <h3 className="font-display text-xl">{s.name}</h3>
+                    <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        {s.duration} min
+                      </span>
+                    </div>
+                    <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
+                      <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                        {s.price >= 30 ? "Desde" : "Precio"}
+                      </span>
+                      <span className="font-display text-2xl">{s.price}€</span>
+                    </div>
+                  </article>
+                ))}
               </div>
-              <h3 className="font-display text-2xl">{s.name}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
-              <div className="mt-6 flex items-end justify-between border-t border-border pt-4">
-                <span className="text-xs uppercase tracking-widest text-muted-foreground">Desde</span>
-                <span className="font-display text-2xl">{s.price}</span>
-              </div>
-            </article>
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
       </div>
     </section>
   );
