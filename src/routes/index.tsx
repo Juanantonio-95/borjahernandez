@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-bh.jpg.asset.json";
 import aboutVideo from "@/assets/barberia-about.mp4.asset.json";
 import { BookingSection } from "@/components/BookingSection";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SERVICES } from "@/lib/services";
 import {
   Scissors,
   Phone,
