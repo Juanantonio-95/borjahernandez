@@ -347,9 +347,9 @@ function Why() {
 
 function Testimonials() {
   const reviews = [
-    { t: "Buen trabajo, buen trato y muy buen ambiente.", a: "Cliente verificado" },
-    { t: "Muy cuidadosos con la limpieza y la profesionalidad.", a: "Cliente verificado" },
-    { t: "Son muy amables y realizan cortes de gran calidad.", a: "Cliente verificado" },
+    { t: "Buen trabajo, buen trato, buen rollo.", a: "Google Maps" },
+    { t: "Muy cuidadosos con la limpieza y la profesionalidad indiscutible.", a: "Google Maps" },
+    { t: "Son muy majos y trabajan muy bien.", a: "Google Maps" },
   ];
   return (
     <section id="opiniones" className="bg-secondary py-24 md:py-32">
