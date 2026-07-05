@@ -11,6 +11,18 @@ import {
 
 const ADMIN_PASSWORD = "borja2026";
 const SLOT_STEP = 30; // minutes
+const BACKEND_UNAVAILABLE_MESSAGE =
+  "No se pudo conectar con el sistema de reservas. Revisa que el backend de Lovable Cloud esté activo e inténtalo de nuevo.";
+
+function isBackendConnectionError(error: unknown) {
+  return error instanceof TypeError && error.message.toLowerCase().includes("fetch failed");
+}
+
+function getBookingErrorMessage(error: unknown) {
+  if (isBackendConnectionError(error)) return BACKEND_UNAVAILABLE_MESSAGE;
+  if (error instanceof Error) return error.message;
+  return "Error inesperado en el sistema de reservas";
+}
 
 // ---------- Public: available slots for a date+service ----------
 export const getAvailableSlots = createServerFn({ method: "POST" })
@@ -24,16 +36,26 @@ export const getAvailableSlots = createServerFn({ method: "POST" })
     const schedule = getDaySchedule(data.dateISO);
     if (schedule.length === 0) return { slots: [] as string[] };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: appts, error } = await supabaseAdmin
-      .from("appointments")
-      .select("start_time, end_time, barber_index, status")
-      .eq("appointment_date", data.dateISO)
-      .neq("status", "cancelled");
-    if (error) throw new Error(error.message);
+    let appts: Array<{ start_time: string; end_time: string; barber_index: number; status: string }> = [];
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error } = await supabaseAdmin
+        .from("appointments")
+        .select("start_time, end_time, barber_index, status")
+        .eq("appointment_date", data.dateISO)
+        .neq("status", "cancelled");
+      if (error) throw new Error(error.message);
+      appts = rows ?? [];
+    } catch (error) {
+      return {
+        slots: [] as string[],
+        unavailable: true,
+        message: getBookingErrorMessage(error),
+      };
+    }
 
     const busy: Array<Array<[number, number]>> = Array.from({ length: NUM_BARBERS }, () => []);
-    for (const a of appts ?? []) {
+    for (const a of appts) {
       busy[a.barber_index].push([timeToMinutes(a.start_time), timeToMinutes(a.end_time)]);
     }
 
@@ -73,17 +95,24 @@ export const createAppointment = createServerFn({ method: "POST" })
     const insideHours = schedule.some(([o, c]) => startMin >= o && endMin <= c);
     if (!insideHours) throw new Error("Hora fuera de horario");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: appts, error: fetchErr } = await supabaseAdmin
-      .from("appointments")
-      .select("start_time, end_time, barber_index, status")
-      .eq("appointment_date", data.dateISO)
-      .neq("status", "cancelled");
-    if (fetchErr) throw new Error(fetchErr.message);
+    let supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+    let appts: Array<{ start_time: string; end_time: string; barber_index: number; status: string }> = [];
+    try {
+      ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
+      const { data: rows, error: fetchErr } = await supabaseAdmin
+        .from("appointments")
+        .select("start_time, end_time, barber_index, status")
+        .eq("appointment_date", data.dateISO)
+        .neq("status", "cancelled");
+      if (fetchErr) throw new Error(fetchErr.message);
+      appts = rows ?? [];
+    } catch (error) {
+      throw new Error(getBookingErrorMessage(error));
+    }
 
     let assigned: number | null = null;
     for (let b = 0; b < NUM_BARBERS; b++) {
-      const overlap = (appts ?? [])
+      const overlap = appts
         .filter((a) => a.barber_index === b)
         .some((a) => {
           const as = timeToMinutes(a.start_time);
@@ -97,19 +126,23 @@ export const createAppointment = createServerFn({ method: "POST" })
     }
     if (assigned === null) throw new Error("Sin disponibilidad para esa hora");
 
-    const { error: insertErr } = await supabaseAdmin.from("appointments").insert({
-      service_id: service.id,
-      service_name: service.name,
-      service_price: service.price,
-      service_duration: service.duration,
-      appointment_date: data.dateISO,
-      start_time: minutesToTime(startMin),
-      end_time: minutesToTime(endMin),
-      barber_index: assigned,
-      customer_name: data.name,
-      customer_phone: data.phone,
-    });
-    if (insertErr) throw new Error(insertErr.message);
+    try {
+      const { error: insertErr } = await supabaseAdmin.from("appointments").insert({
+        service_id: service.id,
+        service_name: service.name,
+        service_price: service.price,
+        service_duration: service.duration,
+        appointment_date: data.dateISO,
+        start_time: minutesToTime(startMin),
+        end_time: minutesToTime(endMin),
+        barber_index: assigned,
+        customer_name: data.name,
+        customer_phone: data.phone,
+      });
+      if (insertErr) throw new Error(insertErr.message);
+    } catch (error) {
+      throw new Error(getBookingErrorMessage(error));
+    }
 
     return { ok: true, barberIndex: assigned };
   });
@@ -119,14 +152,18 @@ export const adminListAppointments = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ password: z.string() }).parse(input))
   .handler(async ({ data }) => {
     if (data.password !== ADMIN_PASSWORD) throw new Error("Contraseña incorrecta");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
-      .from("appointments")
-      .select("*")
-      .order("appointment_date", { ascending: true })
-      .order("start_time", { ascending: true });
-    if (error) throw new Error(error.message);
-    return { appointments: rows ?? [] };
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error } = await supabaseAdmin
+        .from("appointments")
+        .select("*")
+        .order("appointment_date", { ascending: true })
+        .order("start_time", { ascending: true });
+      if (error) throw new Error(error.message);
+      return { appointments: rows ?? [] };
+    } catch (error) {
+      throw new Error(getBookingErrorMessage(error));
+    }
   });
 
 export const adminUpdateStatus = createServerFn({ method: "POST" })
@@ -141,12 +178,16 @@ export const adminUpdateStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     if (data.password !== ADMIN_PASSWORD) throw new Error("Contraseña incorrecta");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("appointments")
-      .update({ status: data.status })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin
+        .from("appointments")
+        .update({ status: data.status })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } catch (error) {
+      throw new Error(getBookingErrorMessage(error));
+    }
     return { ok: true };
   });
 
@@ -154,8 +195,12 @@ export const adminDeleteAppointment = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ password: z.string(), id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     if (data.password !== ADMIN_PASSWORD) throw new Error("Contraseña incorrecta");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("appointments").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin.from("appointments").delete().eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } catch (error) {
+      throw new Error(getBookingErrorMessage(error));
+    }
     return { ok: true };
   });

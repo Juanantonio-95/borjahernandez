@@ -69,6 +69,9 @@ export function BookingSection() {
     setError(null);
     try {
       const r = await fetchSlots({ data: { dateISO: iso, serviceId: service.id } });
+      if ("unavailable" in r && r.unavailable) {
+        setError(r.message);
+      }
       setSlots(r.slots);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
